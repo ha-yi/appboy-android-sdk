@@ -2,6 +2,8 @@ package com.appboy.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -100,6 +102,23 @@ public class AppboyWebViewActivity extends FragmentActivity {
       @SuppressWarnings("deprecation") // Updated method is called above
       @Override
       public boolean shouldOverrideUrlLoading(WebView view, String url) {
+
+        // hacks
+        if(url.startsWith("intent://")) {
+          try {
+            PackageManager pm = getPackageManager();
+            // Try to find an installed app
+            Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+            if (intent.resolveActivity(pm) != null) {
+              intent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+              startActivity(intent);
+              return true;
+            }
+          } catch (Exception e) {
+            BrazeLogger.e(TAG, "Failed to handle INTENT: " + e.toString(), e);
+          }
+        }
+
         Boolean didHandleUrl = handleUrlOverride(view.getContext(), url);
         if (didHandleUrl != null) {
           return didHandleUrl;

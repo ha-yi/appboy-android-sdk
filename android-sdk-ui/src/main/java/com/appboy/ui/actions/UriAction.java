@@ -3,6 +3,7 @@ package com.appboy.ui.actions;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
@@ -197,6 +198,20 @@ public class UriAction implements IAction {
   }
 
   protected Intent getActionViewIntent(Context context, Uri uri, Bundle extras) {
+    if(uri.getScheme().startsWith("intent") || uri.toString().startsWith("intent://")) {
+      try {
+        PackageManager pm = context.getPackageManager();
+        // Try to find an installed app
+        Intent intent = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME);
+        if (intent.resolveActivity(pm) != null) {
+          intent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+          return intent;
+        }
+      } catch (Exception e) {
+        BrazeLogger.e(TAG, "Failed to handle INTENT: " + e.toString(), e);
+      }
+    }
+
     Intent intent = new Intent(Intent.ACTION_VIEW);
     intent.setData(uri);
 
